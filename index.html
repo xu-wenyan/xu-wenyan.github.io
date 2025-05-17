@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>233乐园-社区发现页</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 10px;
+            background: #f0f0f0;
+        }
+        .container {
+            column-count: 2;
+            column-gap: 10px;
+        }
+        .item {
+            break-inside: avoid;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .item img, .item video {
+            width: 100%;
+            border-radius: 8px 8px 0 0;
+        }
+        .title {
+            padding: 8px;
+            font-size: 14px;
+            color: #333;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="container"></div>
+    <div class="loading" id="loading">加载中...</div>
+
+    <script>
+        // 解析URL参数
+        const urlParams = new URLSearchParams(window.location.search);
+        const dataType = urlParams.get('type') || '1';
+
+        // Mock数据生成
+        function generateMockData(type, page) {
+            const items = [];
+            for (let i = 0; i < 10; i++) {
+                const isVideo = type === '2' ? Math.random() > 0.3 : Math.random() > 0.7; // type=2视频更多
+                items.push({
+                    id: `${type}-${page}-${i}`,
+                    title: `乐园社区动态（类型${type}）第${page}页-${i}`,
+                    type: isVideo ? 'video' : 'image',
+                    url: isVideo ? 
+                        'https://www.w3schools.com/html/mov_bbb.mp4' : 
+                        `https://picsum.photos/300/400?random=${Math.random()}`,
+                });
+            }
+            return items;
+        }
+
+        // 模拟API请求
+        let currentPage = 1;
+        let isLoading = false;
+
+        async function fetchData() {
+            if (isLoading) return;
+            isLoading = true;
+            document.getElementById('loading').style.display = 'block';
+
+            // 模拟延迟
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            const data = generateMockData(dataType, currentPage);
+
+            // 渲染数据
+            renderItems(data);
+            currentPage++;
+            isLoading = false;
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        // 渲染内容
+        function renderItems(items) {
+            const container = document.getElementById('container');
+            items.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'item';
+                div.innerHTML = `
+                    ${item.type === 'video' ? 
+                        `<video controls><source src="${item.url}" type="video/mp4"></video>` : 
+                        `<img src="${item.url}" />`}
+                    <div class="title">${item.title}</div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // 上拉加载
+        window.addEventListener('scroll', () => {
+            const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+            if (scrollTop + clientHeight >= scrollHeight - 100) {
+                fetchData();
+            }
+        });
+
+        // 下拉刷新
+        let startY = 0;
+        document.addEventListener('touchstart', e => {
+            startY = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchmove', e => {
+            const currentY = e.touches[0].clientY;
+            if (window.scrollY === 0 && currentY - startY > 100) {
+                currentPage = 1;
+                document.getElementById('container').innerHTML = '';
+                fetchData();
+            }
+        });
+
+        // 初始化加载
+        fetchData();
+    </script>
+</body>
+</html>
